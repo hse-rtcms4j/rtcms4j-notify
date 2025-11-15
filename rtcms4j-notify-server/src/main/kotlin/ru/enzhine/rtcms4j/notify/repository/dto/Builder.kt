@@ -1,7 +1,6 @@
 package ru.enzhine.rtcms4j.notify.repository.dto
 
 import java.time.OffsetDateTime
-import java.util.UUID
 
 fun newConfigurationSyncStateEntity(
     configurationId: Long,

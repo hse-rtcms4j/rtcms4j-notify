@@ -139,6 +139,18 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
 
   schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - messageCode
+        - message
+      properties:
+        messageCode:
+          type: integer
+          format: int32
+        message:
+          type: string
+
     ConfigurationAcknowledge:
       type: object
       required:
