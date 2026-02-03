@@ -6,6 +6,7 @@ apply {
 }
 
 dependencies {
+    api("io.projectreactor:reactor-core")
     api("org.springframework:spring-web")
     api("org.springframework:spring-context")
     api("org.springframework.data:spring-data-commons")
@@ -15,36 +16,11 @@ dependencies {
     api("jakarta.servlet:jakarta.servlet-api")
 }
 
-fun extractPagedModelComponents(
-    dtoPath: String,
-    openApiFile: File,
-): Map<String, String> {
-    val mapper = ObjectMapper(YAMLFactory())
-    val spec = mapper.readValue(openApiFile, Map::class.java)
-
-    val components = (spec["components"] as? Map<*, *>)?.get("schemas") as? Map<*, *>
-    val mappings = mutableMapOf<String, String>()
-
-    components?.forEach { (key, _) ->
-        val componentName = key.toString()
-
-        when {
-            componentName.startsWith("PagedModel") -> {
-                // Extract the inner type from PagedModelComponentName
-                val innerType = componentName.removePrefix("PagedModel")
-                mappings[componentName] = "org.springframework.data.web.PagedModel<$dtoPath.$innerType>"
-            }
-        }
-    }
-
-    return mappings
-}
-
 val projectBuildDir = layout.buildDirectory.get()
 
 tasks.openApiGenerate {
-    // DOCS: https://openapi-generator.tech/docs/generators/kotlin-spring/
-    generatorName = "kotlin-spring"
+    // DOCS: https://openapi-generator.tech/docs/generators/spring/
+    generatorName = "spring"
 
     outputDir = "$projectBuildDir/generated"
     inputSpec = "$projectDir/src/main/resources/static/openapi/notify-api.yaml"
@@ -53,27 +29,20 @@ tasks.openApiGenerate {
 
     configOptions.set(
         mapOf(
+            "reactive" to "true",
             "interfaceOnly" to "true",
             "useSpringBoot3" to "true",
             "useTags" to "true",
             "skipDefaultInterface" to "true",
             "documentationProvider" to "none",
-            "exceptionHandler" to "false",
             "useSwaggerUI" to "false",
             "useResponseEntity" to "false",
             "requestMappingMode" to "none",
+            "openApiNullable" to "false",
         ),
     )
 
-    val mappings = extractPagedModelComponents(modelPackage.get(), file(inputSpec.get()))
-    schemaMappings.putAll(
-        mapOf(
-            "PageMetadata" to "org.springframework.data.web.PagedModel.PageMetadata",
-            "Pageable" to "org.springframework.data.domain.Pageable",
-        ) + mappings,
-    )
-
-    openapiGeneratorIgnoreList = listOf("**/ApiUtil.kt")
+    openapiGeneratorIgnoreList = listOf("**/ApiUtil.java")
 }
 
 tasks.runKtlintCheckOverMainSourceSet {
@@ -87,7 +56,7 @@ tasks.compileKotlin {
 sourceSets {
     main {
         java {
-            srcDir("$projectBuildDir/generated/src/main/kotlin")
+            srcDir("$projectBuildDir/generated/src/main/java")
         }
     }
 }

@@ -44,24 +44,17 @@ subprojects {
     dependencyManagement {
         imports {
             val springBootVersion: String by project
-            val springCloudVersion: String by project
+//            val springCloudVersion: String by project
             val embeddedPostgresBinariesBomVersion: String by project
 
             mavenBom("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
-            mavenBom("org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion")
+//            mavenBom("org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion")
             mavenBom("io.zonky.test.postgres:embedded-postgres-binaries-bom:$embeddedPostgresBinariesBomVersion")
         }
 
         dependencies {
-            val springDocVersion: String by project
-
-            dependency("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
-
-            val embeddedPostgresVersion: String by project
-            val embeddedDatabaseSpringTestVersion: String by project
-
-            dependency("io.zonky.test:embedded-postgres:$embeddedPostgresVersion")
-            dependency("io.zonky.test:embedded-database-spring-test:$embeddedDatabaseSpringTestVersion")
+//            val springDocVersion: String by project
+//            dependency("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springDocVersion")
 
             val cucumberVersion: String by project
             dependency("io.cucumber:cucumber-jvm:$cucumberVersion")

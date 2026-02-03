@@ -9,12 +9,12 @@ paths:
   ############################
   # Managing configurations: #
   ############################
-  /namespace/{nid}/application/{aid}/configuration/{cid}/ack:
-    post:
+  /namespace/{nid}/application/{aid}/configuration/{cid}/sse-stream:
+    get:
       tags:
         - Notify
-      summary: Acknowledge namespace application configuration schema
-      operationId: acknowledgeConfiguration
+      summary: SSE notifications endpoint
+      operationId: subscribeOnConfigurationSse
       parameters:
         - name: nid
           description: Namespace id
@@ -37,15 +37,15 @@ paths:
           schema:
             type: integer
             format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConfigurationAcknowledge'
       responses:
         '200':
-          description: Successful operation
+          description: Successfully connected to event stream
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationEventDto"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -57,12 +57,56 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /namespace/{nid}/application/{aid}/configuration/{cid}/stream-state:
-    put:
+  /namespace/{nid}/application/{aid}/configuration/{cid}/feedback:
+    get:
       tags:
         - Notify
-      summary: Support core with real stream state
-      operationId: updateStreamStateConfiguration
+      summary: Get feedback from all applications
+      operationId: getApplicationFeedback
+      parameters:
+        - name: nid
+          description: Namespace id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: aid
+          description: Application id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: cid
+          description: Container id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LastFeedbackResponseDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Notify
+      summary: Post feedback by application
+      operationId: postApplicationFeedback
       parameters:
         - name: nid
           description: Namespace id
@@ -90,10 +134,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigurationStreamState'
+              $ref: '#/components/schemas/ApplicationFeedbackRequestDto'
       responses:
-        '200':
-          description: Successful operation
+        '204':
+          description: Successfully posted
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -104,6 +148,7 @@ paths:
           $ref: '#/components/responses/MethodNotAllowed'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
 
 components:
   responses:
@@ -151,24 +196,69 @@ components:
         message:
           type: string
 
-    ConfigurationAcknowledge:
+    NotificationEventDto:
       type: object
       required:
-        - commitHash
-        - serviceId
+        - configurationUpdateEvent
+        - passwordRotationEvent
       properties:
-        commitHash:
-          type: string
-        serviceId:
+        configurationUpdateEvent:
+          $ref: '#/components/schemas/ConfigurationUpdateEventDto'
+        passwordRotationEvent:
+          $ref: '#/components/schemas/PasswordRotationEventDto'
+
+    ConfigurationUpdateEventDto:
+      type: object
+      required:
+        - configurationId
+        - content
+      properties:
+        configurationId:
+          type: integer
+          format: int64
+        content:
           type: string
 
-    ConfigurationStreamState:
+    PasswordRotationEventDto:
       type: object
       required:
-        - serviceId
-        - connected
+        - newPassword
       properties:
-        serviceId:
+        newPassword:
           type: string
-        connected:
+
+    ApplicationFeedbackRequestDto:
+      type: object
+      required:
+        - clientName
+      properties:
+        clientName:
+          type: string
+        appliedVersion:
+          type: string
+        isPasswordRotated:
+          type: boolean
+
+    LastFeedbackResponseDto:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          $ref: '#/components/schemas/ApplicationFeedbackDto'
+
+    ApplicationFeedbackDto:
+      type: object
+      required:
+        - datedAt
+        - clientName
+      properties:
+        datedAt:
+          type: string
+          format: datetime
+        clientName:
+          type: string
+        appliedVersion:
+          type: string
+        isPasswordRotated:
           type: boolean
