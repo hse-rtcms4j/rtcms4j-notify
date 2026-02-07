@@ -1,9 +1,24 @@
 apply {
+    plugin("org.openapi.generator")
     plugin("org.springframework.boot")
+}
+
+val specDependency by configurations.registering {
+    isCanBeConsumed = false
+    isCanBeResolved = false
+}
+val spec by configurations.registering {
+    extendsFrom(specDependency.get())
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    isTransitive = false
 }
 
 dependencies {
     api(project(":rtcms4j-notify-api"))
+
+    implementation("ru.enzhine:rtcms4j-core-api")
+    specDependency("ru.enzhine:rtcms4j-core-api")
 
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
@@ -20,6 +35,52 @@ dependencies {
     testImplementation("io.cucumber:cucumber-spring")
     testImplementation("io.cucumber:cucumber-junit-platform-engine")
     testImplementation("org.junit.platform:junit-platform-suite")
+}
+
+val projectBuildDir = layout.buildDirectory.get()
+
+tasks.openApiGenerate {
+    // DOCS: https://openapi-generator.tech/docs/generators/java/
+    generatorName = "java"
+
+    outputDir = "$projectBuildDir/generated"
+    inputSpec.set(
+        spec
+            .flatMap { it.elements }
+            .map {
+                resources.text
+                    .fromArchiveEntry(it, "static/openapi/core-api.yaml")
+                    .asFile()
+                    .absolutePath
+            },
+    )
+    modelPackage = "ru.enzhine.rtcms4j.core.api.dto"
+    apiPackage = "ru.enzhine.rtcms4j.core.api"
+
+    configOptions.set(
+        mapOf(
+            "library" to "webclient",
+            "documentationProvider" to "none",
+            "openApiNullable" to "false",
+            "useJakartaEe" to "true",
+        ),
+    )
+}
+
+tasks.compileKotlin {
+    dependsOn(tasks.openApiGenerate)
+}
+
+tasks.runKtlintCheckOverMainSourceSet {
+    enabled = false
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir("$projectBuildDir/generated/src/main/java")
+        }
+    }
 }
 
 tasks.bootJar {
