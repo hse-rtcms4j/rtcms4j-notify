@@ -1,34 +1,86 @@
 apply {
+    plugin("org.openapi.generator")
     plugin("org.springframework.boot")
 }
 
+val specDependency by configurations.registering {
+    isCanBeConsumed = false
+    isCanBeResolved = false
+}
+val spec by configurations.registering {
+    extendsFrom(specDependency.get())
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    isTransitive = false
+}
+
 dependencies {
-    // Main purposed
     api(project(":rtcms4j-notify-api"))
 
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework:spring-tx")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    implementation("org.springframework.boot:spring-boot-starter-jdbc")
-    implementation("org.liquibase:liquibase-core")
+    implementation("ru.enzhine:rtcms4j-core-api")
+    specDependency("ru.enzhine:rtcms4j-core-api")
 
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
-    runtimeOnly("org.postgresql:postgresql")
+//    testImplementation("org.springframework.boot:spring-boot-starter-test")
+//    testImplementation("io.cucumber:cucumber-jvm")
+//    testImplementation("io.cucumber:cucumber-spring")
+//    testImplementation("io.cucumber:cucumber-junit-platform-engine")
+//    testImplementation("org.junit.platform:junit-platform-suite")
+}
 
-    // Test purposed
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.cucumber:cucumber-jvm")
-    testImplementation("io.cucumber:cucumber-spring")
-    testImplementation("io.cucumber:cucumber-junit-platform-engine")
-    testImplementation("org.junit.platform:junit-platform-suite")
-    testImplementation("io.zonky.test:embedded-postgres")
-    testImplementation("io.zonky.test:embedded-database-spring-test")
+val projectBuildDir = layout.buildDirectory.get()
+
+tasks.openApiGenerate {
+    // DOCS: https://openapi-generator.tech/docs/generators/java/
+    generatorName = "java"
+
+    outputDir = "$projectBuildDir/generated"
+    inputSpec.set(
+        spec
+            .flatMap { it.elements }
+            .map {
+                resources.text
+                    .fromArchiveEntry(it, "static/openapi/core-api.yaml")
+                    .asFile()
+                    .absolutePath
+            },
+    )
+    modelPackage = "ru.enzhine.rtcms4j.core.api.dto"
+    apiPackage = "ru.enzhine.rtcms4j.core.api"
+
+    configOptions.set(
+        mapOf(
+            "library" to "webclient",
+            "documentationProvider" to "none",
+            "openApiNullable" to "false",
+            "useJakartaEe" to "true",
+        ),
+    )
+}
+
+tasks.compileKotlin {
+    dependsOn(tasks.openApiGenerate)
+}
+
+tasks.runKtlintCheckOverMainSourceSet {
+    enabled = false
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir("$projectBuildDir/generated/src/main/java")
+        }
+    }
 }
 
 tasks.bootJar {

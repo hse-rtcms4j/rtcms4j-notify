@@ -5,16 +5,19 @@ info:
 servers:
   - url: /api/v1
 
+security:
+  - bearerAuth: [ ]
+
 paths:
   ############################
   # Managing configurations: #
   ############################
-  /namespace/{nid}/application/{aid}/configuration/{cid}/ack:
-    post:
+  /namespace/{nid}/application/{aid}/sse-stream:
+    get:
       tags:
         - Notify
-      summary: Acknowledge namespace application configuration schema
-      operationId: acknowledgeConfiguration
+      summary: SSE notifications endpoint
+      operationId: subscribeOnNotificationSse
       parameters:
         - name: nid
           description: Namespace id
@@ -30,22 +33,15 @@ paths:
           schema:
             type: integer
             format: int64
-        - name: cid
-          description: Container id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConfigurationAcknowledge'
       responses:
         '200':
-          description: Successful operation
+          description: Successfully connected to event stream
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationEventDto"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -57,12 +53,90 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /namespace/{nid}/application/{aid}/configuration/{cid}/stream-state:
-    put:
+  /namespace/{nid}/application/{aid}/feedback:
+    get:
       tags:
         - Notify
-      summary: Support core with real stream state
-      operationId: updateStreamStateConfiguration
+      summary: Get application-level feedback
+      operationId: getApplicationFeedback
+      parameters:
+        - name: nid
+          description: Namespace id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: aid
+          description: Application id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationFeedbackResponseDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Notify
+      summary: Post application-level feedback
+      operationId: postApplicationFeedback
+      parameters:
+        - name: nid
+          description: Namespace id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: aid
+          description: Application id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationFeedbackRequestDto'
+      responses:
+        '204':
+          description: Successfully posted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /namespace/{nid}/application/{aid}/configuration/{cid}/feedback:
+    get:
+      tags:
+        - Notify
+      summary: Get configuration-level feedback
+      operationId: getConfigurationFeedback
       parameters:
         - name: nid
           description: Namespace id
@@ -79,7 +153,51 @@ paths:
             type: integer
             format: int64
         - name: cid
-          description: Container id
+          description: Configuration id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationFeedbackResponseDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Notify
+      summary: Post configuration-level feedback
+      operationId: postConfigurationFeedback
+      parameters:
+        - name: nid
+          description: Namespace id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: aid
+          description: Application id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: cid
+          description: Configuration id
           in: path
           required: true
           schema:
@@ -90,10 +208,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigurationStreamState'
+              $ref: '#/components/schemas/ConfigurationFeedbackRequestDto'
       responses:
-        '200':
-          description: Successful operation
+        '204':
+          description: Successfully posted
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -106,6 +224,12 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   responses:
     BadRequest:
       description: Wrong or unexpected
@@ -139,24 +263,117 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
 
   schemas:
-    ConfigurationAcknowledge:
+    ErrorResponse:
       type: object
       required:
-        - commitHash
-        - serviceId
+        - messageCode
+        - message
       properties:
-        commitHash:
-          type: string
-        serviceId:
+        messageCode:
+          type: integer
+          format: int32
+        message:
           type: string
 
-    ConfigurationStreamState:
+    NotificationEventDto:
       type: object
       required:
-        - serviceId
-        - connected
+        - configurationUpdateEvent
+        - passwordRotationEvent
       properties:
-        serviceId:
+        configurationUpdateEvent:
+          $ref: '#/components/schemas/ConfigurationUpdateEventDto'
+        passwordRotationEvent:
+          $ref: '#/components/schemas/PasswordRotationEventDto'
+
+    ConfigurationUpdateEventDto:
+      type: object
+      required:
+        - configurationId
+        - content
+      properties:
+        configurationId:
+          type: integer
+          format: int64
+        content:
           type: string
-        connected:
+
+    PasswordRotationEventDto:
+      type: object
+      required:
+        - newPassword
+      properties:
+        newPassword:
+          type: string
+
+    ApplicationFeedbackRequestDto:
+      type: object
+      required:
+        - clientName
+        - isSecretRotated
+      properties:
+        clientName:
+          type: string
+        isSecretRotated:
           type: boolean
+
+    ApplicationFeedbackResponseDto:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationFeedbackDto'
+
+    ApplicationFeedbackDto:
+      type: object
+      required:
+        - datedAt
+        - clientName
+        - isSecretRotated
+      properties:
+        datedAt:
+          type: string
+          format: datetime
+        clientName:
+          type: string
+        isSecretRotated:
+          type: boolean
+
+    ConfigurationFeedbackRequestDto:
+      type: object
+      required:
+        - clientName
+        - appliedVersion
+      properties:
+        clientName:
+          type: string
+        appliedVersion:
+          type: string
+
+    ConfigurationFeedbackResponseDto:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigurationFeedbackDto'
+
+    ConfigurationFeedbackDto:
+      type: object
+      required:
+        - datedAt
+        - clientName
+        - appliedVersion
+      properties:
+        datedAt:
+          type: string
+          format: datetime
+        clientName:
+          type: string
+        appliedVersion:
+          type: string
