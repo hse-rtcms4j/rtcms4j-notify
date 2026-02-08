@@ -154,7 +154,7 @@ class NotifyController(
         currentPrincipal()
             .flatMapMany { keycloakPrincipal ->
                 accessControlService
-                    .hasAccessToConfigurations(
+                    .hasAccessToApplication(
                         keycloakPrincipal = keycloakPrincipal,
                         namespaceId = nid,
                         applicationId = aid,
