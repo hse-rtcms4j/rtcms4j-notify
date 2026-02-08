@@ -9,8 +9,8 @@ import org.springframework.data.redis.listener.ReactiveRedisMessageListenerConta
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import org.springframework.data.redis.serializer.StringRedisSerializer
-import ru.enzhine.rtcms4j.notify.repository.dto.ApplicationFeedback
-import ru.enzhine.rtcms4j.notify.repository.dto.ConfigurationFeedback
+import ru.enzhine.rtcms4j.notify.repository.dto.ApplicationFeedbackEntity
+import ru.enzhine.rtcms4j.notify.repository.dto.ConfigurationFeedbackEntity
 
 @Configuration
 class RedisConfig {
@@ -18,13 +18,13 @@ class RedisConfig {
     fun redisTemplateApplicationFeedback(
         objectMapper: ObjectMapper,
         redisConnectionFactory: ReactiveRedisConnectionFactory,
-    ): ReactiveRedisTemplate<String, ApplicationFeedback> {
+    ): ReactiveRedisTemplate<String, ApplicationFeedbackEntity> {
         val keySerializer = StringRedisSerializer()
-        val valueSerializer = Jackson2JsonRedisSerializer(objectMapper, ApplicationFeedback::class.java)
+        val valueSerializer = Jackson2JsonRedisSerializer(objectMapper, ApplicationFeedbackEntity::class.java)
 
         val context =
             RedisSerializationContext
-                .newSerializationContext<String, ApplicationFeedback>()
+                .newSerializationContext<String, ApplicationFeedbackEntity>()
                 .key(keySerializer)
                 .value(valueSerializer)
                 .hashKey(keySerializer)
@@ -38,13 +38,13 @@ class RedisConfig {
     fun redisTemplateConfigurationFeedback(
         objectMapper: ObjectMapper,
         redisConnectionFactory: ReactiveRedisConnectionFactory,
-    ): ReactiveRedisTemplate<String, ConfigurationFeedback> {
+    ): ReactiveRedisTemplate<String, ConfigurationFeedbackEntity> {
         val keySerializer = StringRedisSerializer()
-        val valueSerializer = Jackson2JsonRedisSerializer(objectMapper, ConfigurationFeedback::class.java)
+        val valueSerializer = Jackson2JsonRedisSerializer(objectMapper, ConfigurationFeedbackEntity::class.java)
 
         val context =
             RedisSerializationContext
-                .newSerializationContext<String, ConfigurationFeedback>()
+                .newSerializationContext<String, ConfigurationFeedbackEntity>()
                 .key(keySerializer)
                 .value(valueSerializer)
                 .hashKey(keySerializer)

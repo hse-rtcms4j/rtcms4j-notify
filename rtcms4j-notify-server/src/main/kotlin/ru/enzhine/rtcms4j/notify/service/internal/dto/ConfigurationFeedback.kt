@@ -1,4 +1,4 @@
-package ru.enzhine.rtcms4j.notify.repository.dto
+package ru.enzhine.rtcms4j.notify.service.internal.dto
 
 import java.time.LocalDateTime
 
