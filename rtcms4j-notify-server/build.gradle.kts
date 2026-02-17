@@ -1,6 +1,7 @@
 apply {
     plugin("org.openapi.generator")
     plugin("org.springframework.boot")
+    plugin("com.google.cloud.tools.jib")
 }
 
 val specDependency by configurations.registering {
@@ -93,4 +94,30 @@ tasks.withType<PublishToMavenRepository> {
 tasks.test {
     useJUnitPlatform()
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}
+
+jib {
+    from {
+        image = "eclipse-temurin:21-jre-alpine"
+    }
+
+    to {
+        image = "ghcr.io/hse-rtcms4j/${project.name.lowercase()}"
+        tags =
+            setOf(
+                project.version.toString(),
+                "latest",
+            )
+
+        auth {
+            username = System.getenv("GITHUB_ACTOR") ?: ""
+            password = System.getenv("GITHUB_TOKEN") ?: ""
+        }
+    }
+
+    container {
+        entrypoint = listOf("java", "-jar", "/app.jar")
+    }
+
+    setAllowInsecureRegistries(true)
 }
