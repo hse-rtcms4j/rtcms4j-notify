@@ -5,6 +5,3 @@ key-val-repository:
   global-prefix: RTCMS4J_CORE_SCOPE_
   topic: NOTIFY_EVENT_TOPIC
   expire-duration: 1h
-
-keycloak:
-  resource-prefix: RTCMS4J_CORE_SCOPE_

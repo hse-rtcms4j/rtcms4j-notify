@@ -1,6 +1,7 @@
 apply {
     plugin("org.openapi.generator")
     plugin("org.springframework.boot")
+    plugin("com.google.cloud.tools.jib")
 }
 
 val specDependency by configurations.registering {
@@ -20,6 +21,7 @@ dependencies {
     implementation("ru.enzhine:rtcms4j-core-api")
     specDependency("ru.enzhine:rtcms4j-core-api")
 
+    implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -29,12 +31,6 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
-
-//    testImplementation("org.springframework.boot:spring-boot-starter-test")
-//    testImplementation("io.cucumber:cucumber-jvm")
-//    testImplementation("io.cucumber:cucumber-spring")
-//    testImplementation("io.cucumber:cucumber-junit-platform-engine")
-//    testImplementation("org.junit.platform:junit-platform-suite")
 }
 
 val projectBuildDir = layout.buildDirectory.get()
@@ -98,4 +94,30 @@ tasks.withType<PublishToMavenRepository> {
 tasks.test {
     useJUnitPlatform()
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+}
+
+jib {
+    from {
+        image = "eclipse-temurin:21-jre-alpine"
+    }
+
+    to {
+        image = "ghcr.io/hse-rtcms4j/${project.name.lowercase()}"
+        tags =
+            setOf(
+                project.version.toString(),
+                "latest",
+            )
+
+        auth {
+            username = System.getenv("GITHUB_ACTOR") ?: ""
+            password = System.getenv("GITHUB_TOKEN") ?: ""
+        }
+    }
+
+    container {
+        entrypoint = listOf("java", "-jar", "/app.jar")
+    }
+
+    setAllowInsecureRegistries(true)
 }
