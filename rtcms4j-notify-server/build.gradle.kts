@@ -20,6 +20,7 @@ dependencies {
     implementation("ru.enzhine:rtcms4j-core-api")
     specDependency("ru.enzhine:rtcms4j-core-api")
 
+    implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -29,12 +30,6 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
-
-//    testImplementation("org.springframework.boot:spring-boot-starter-test")
-//    testImplementation("io.cucumber:cucumber-jvm")
-//    testImplementation("io.cucumber:cucumber-spring")
-//    testImplementation("io.cucumber:cucumber-junit-platform-engine")
-//    testImplementation("org.junit.platform:junit-platform-suite")
 }
 
 val projectBuildDir = layout.buildDirectory.get()

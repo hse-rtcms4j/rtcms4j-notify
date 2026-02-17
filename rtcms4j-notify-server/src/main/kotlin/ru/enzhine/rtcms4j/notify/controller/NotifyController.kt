@@ -1,5 +1,6 @@
 package ru.enzhine.rtcms4j.notify.controller
 
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.ReactiveSecurityContextHolder
 import org.springframework.web.bind.annotation.RequestMapping
@@ -13,12 +14,14 @@ import ru.enzhine.rtcms4j.notify.api.dto.ApplicationFeedbackResponseDto
 import ru.enzhine.rtcms4j.notify.api.dto.ConfigurationFeedbackRequestDto
 import ru.enzhine.rtcms4j.notify.api.dto.ConfigurationFeedbackResponseDto
 import ru.enzhine.rtcms4j.notify.api.dto.NotificationEventDto
+import ru.enzhine.rtcms4j.notify.aspect.Logged
 import ru.enzhine.rtcms4j.notify.mapper.toApi
 import ru.enzhine.rtcms4j.notify.security.dto.KeycloakPrincipal
 import ru.enzhine.rtcms4j.notify.service.external.AccessControlService
 import ru.enzhine.rtcms4j.notify.service.internal.ApplicationFeedbackService
 import ru.enzhine.rtcms4j.notify.service.internal.ConfigurationFeedbackService
 import ru.enzhine.rtcms4j.notify.service.internal.NotificationService
+import java.net.SocketException
 
 @RestController
 @RequestMapping("/api/v1")
@@ -28,6 +31,11 @@ class NotifyController(
     private val notificationService: NotificationService,
     private val accessControlService: AccessControlService,
 ) : NotifyApi {
+    companion object {
+        private val logger = LoggerFactory.getLogger(this::class.java.declaringClass)
+    }
+
+    @Logged
     override fun getApplicationFeedback(
         nid: Long,
         aid: Long,
@@ -55,6 +63,7 @@ class NotifyController(
                     }
             }
 
+    @Logged
     override fun postApplicationFeedback(
         nid: Long,
         aid: Long,
@@ -85,6 +94,7 @@ class NotifyController(
                 }
         }
 
+    @Logged
     override fun getConfigurationFeedback(
         nid: Long,
         aid: Long,
@@ -114,6 +124,7 @@ class NotifyController(
                     }
             }
 
+    @Logged
     override fun postConfigurationFeedback(
         nid: Long,
         aid: Long,
@@ -146,6 +157,7 @@ class NotifyController(
                 }
         }
 
+    @Logged
     override fun subscribeOnNotificationSse(
         nid: Long,
         aid: Long,
@@ -165,6 +177,14 @@ class NotifyController(
                                     namespaceId = nid,
                                     applicationId = aid,
                                 ).map { it.toApi() }
+                                .onErrorResume(SocketException::class.java) { ex ->
+                                    if (ex.message == "Connection reset") {
+                                        logger.info("client disconnected: subscribeOnNotificationSse")
+                                        Flux.empty()
+                                    } else {
+                                        Flux.error(ex)
+                                    }
+                                }
                         } else {
                             Flux.error(AccessDeniedException("At least application manager or program-client required."))
                         }
