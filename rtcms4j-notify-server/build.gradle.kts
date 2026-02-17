@@ -115,9 +115,5 @@ jib {
         }
     }
 
-    container {
-        entrypoint = listOf("java", "-jar", "/app.jar")
-    }
-
     setAllowInsecureRegistries(true)
 }
