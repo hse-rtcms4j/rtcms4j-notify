@@ -24,4 +24,4 @@ spring:
           issuer-uri: http://localhost:8080/realms/rtcms4j
 
 core-api:
-  base-url: /api/v1
+  base-url: http://localhost:8081
