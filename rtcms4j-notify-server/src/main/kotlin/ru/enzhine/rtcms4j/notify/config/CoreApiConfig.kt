@@ -3,6 +3,7 @@ package ru.enzhine.rtcms4j.notify.config
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.core.context.ReactiveSecurityContextHolder
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import ru.enzhine.rtcms4j.core.ApiClient
@@ -40,5 +41,6 @@ class CoreApiConfig {
             .getContext()
             .map { it.authentication }
             .map { it.credentials }
-            .cast(String::class.java)
+            .cast(Jwt::class.java)
+            .map { it.tokenValue }
 }
