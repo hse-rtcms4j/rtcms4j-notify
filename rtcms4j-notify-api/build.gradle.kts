@@ -90,13 +90,15 @@ val versionIdStatus: String by rootProject
 val versionId: String = if (versionIdStatus.isEmpty()) versionIdNumber else "$versionIdNumber-$versionIdStatus"
 
 mavenPublishing {
-    coordinates(groupId, project.name, versionId)
+    val rootName = rootProject.name
+    val projectName = project.name
+    coordinates(groupId, projectName, versionId)
 
     pom {
-        name.set(rootProject.name)
+        name.set(projectName)
         description.set(rootProject.description)
         inceptionYear.set(LocalDateTime.now().year.toString())
-        url.set("https://github.com/hse-rtcms4j/rtcms4j-notify/actions")
+        url.set("https://github.com/hse-rtcms4j/$rootName")
         licenses {
             license {
                 name.set("The Apache License, Version 2.0")
@@ -112,9 +114,9 @@ mavenPublishing {
             }
         }
         scm {
-            url.set("https://github.com/hse-rtcms4j/rtcms4j-notify")
-            connection.set("scm:git:git://github.com/hse-rtcms4j/rtcms4j-notify.git")
-            developerConnection.set("scm:git:ssh://git@github.com/hse-rtcms4j/rtcms4j-notify.git")
+            url.set("https://github.com/hse-rtcms4j/$rootName")
+            connection.set("scm:git:git://github.com/hse-rtcms4j/$rootName.git")
+            developerConnection.set("scm:git:ssh://git@github.com/hse-rtcms4j/$rootName.git")
         }
     }
 }
