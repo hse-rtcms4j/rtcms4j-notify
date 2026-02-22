@@ -63,14 +63,6 @@ tasks.openApiGenerate {
     )
 }
 
-tasks.compileKotlin {
-    dependsOn(tasks.openApiGenerate)
-}
-
-tasks.runKtlintCheckOverMainSourceSet {
-    enabled = false
-}
-
 sourceSets {
     main {
         java {
@@ -79,21 +71,35 @@ sourceSets {
     }
 }
 
-tasks.bootJar {
-    enabled = true
+plugins.withId("com.vanniktech.maven.publish") {
+    afterEvaluate {
+        tasks
+            .findByName("sourcesJar")
+            ?.dependsOn("openApiGenerate")
+    }
 }
 
-tasks.jar {
-    enabled = false
-}
+tasks {
+    compileKotlin {
+        dependsOn(openApiGenerate)
+    }
 
-tasks.withType<PublishToMavenRepository> {
-    enabled = false
-}
+    runKtlintCheckOverMainSourceSet {
+        enabled = false
+    }
 
-tasks.test {
-    useJUnitPlatform()
-    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+    bootJar {
+        enabled = true
+    }
+
+    jar {
+        enabled = false
+    }
+
+    test {
+        useJUnitPlatform()
+        testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+    }
 }
 
 jib {

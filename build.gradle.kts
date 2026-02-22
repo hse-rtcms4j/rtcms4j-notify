@@ -1,16 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import java.net.URI
-
-fun RepositoryHandler.github(repo: String) = maven {
-    name = "GitHubPackages"
-    url = URI.create("https://maven.pkg.github.com/$repo")
-    credentials {
-        // picks from: .../user/.gradle/gradle.properties
-        username = System.getenv("GITHUB_ACTOR") ?: findProperty("GITHUB_LOGIN") as String?
-        password = System.getenv("GITHUB_TOKEN") ?: findProperty("GITHUB_TOKEN") as String?
-    }
-}
 
 plugins {
     kotlin("jvm") apply false
@@ -18,9 +7,9 @@ plugins {
     id("org.springframework.boot") apply false
     id("org.jlleitschuh.gradle.ktlint") apply false
     id("org.openapi.generator") apply false
-    id("io.spring.dependency-management")
-    id("maven-publish")
     id("com.google.cloud.tools.jib") apply false
+    id("io.spring.dependency-management")
+    id("com.vanniktech.maven.publish")
 }
 
 subprojects {
@@ -31,8 +20,8 @@ subprojects {
         plugin("org.jlleitschuh.gradle.ktlint")
         plugin("org.openapi.generator")
         plugin("org.springframework.boot")
-        plugin("maven-publish")
         plugin("com.google.cloud.tools.jib")
+        plugin("com.vanniktech.maven.publish")
     }
 
     val groupId: String by project
@@ -66,22 +55,6 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-
-        github("hse-rtcms4j/rtcms4j-core")
-    }
-
-    publishing {
-        publications {
-            create<MavenPublication>("maven") {
-                this.groupId = groupId
-                this.artifactId = project.name
-                this.version = versionId
-                from(components["java"])
-            }
-        }
-        repositories {
-            github("hse-rtcms4j/rtcms4j-notify")
-        }
     }
 }
 

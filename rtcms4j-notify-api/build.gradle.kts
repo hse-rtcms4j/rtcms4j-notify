@@ -1,3 +1,5 @@
+import java.time.LocalDateTime
+
 apply {
     plugin("org.openapi.generator")
 }
@@ -42,14 +44,6 @@ tasks.openApiGenerate {
     openapiGeneratorIgnoreList = listOf("**/ApiUtil.java")
 }
 
-tasks.runKtlintCheckOverMainSourceSet {
-    enabled = false
-}
-
-tasks.compileKotlin {
-    dependsOn(tasks.openApiGenerate)
-}
-
 sourceSets {
     main {
         java {
@@ -58,10 +52,69 @@ sourceSets {
     }
 }
 
-tasks.bootJar {
-    enabled = false
+plugins.withId("com.vanniktech.maven.publish") {
+    afterEvaluate {
+        tasks
+            .findByName("sourcesJar")
+            ?.dependsOn("openApiGenerate")
+    }
 }
 
-tasks.jar {
-    enabled = true
+tasks {
+    runKtlintCheckOverMainSourceSet {
+        enabled = false
+    }
+
+    compileKotlin {
+        dependsOn(openApiGenerate)
+    }
+
+    bootJar {
+        enabled = false
+    }
+
+    jar {
+        enabled = true
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral(automaticRelease = true)
+    signAllPublications()
+}
+
+val groupId: String by rootProject
+
+val versionIdNumber: String by rootProject
+val versionIdStatus: String by rootProject
+val versionId: String = if (versionIdStatus.isEmpty()) versionIdNumber else "$versionIdNumber-$versionIdStatus"
+
+mavenPublishing {
+    coordinates(groupId, project.name, versionId)
+
+    pom {
+        name.set(rootProject.name)
+        description.set(rootProject.description)
+        inceptionYear.set(LocalDateTime.now().year.toString())
+        url.set("https://github.com/hse-rtcms4j/rtcms4j-notify/actions")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("Enzhine")
+                name.set("Onar")
+                url.set("https://github.com/enzhine/")
+            }
+        }
+        scm {
+            url.set("https://github.com/hse-rtcms4j/rtcms4j-notify")
+            connection.set("scm:git:git://github.com/hse-rtcms4j/rtcms4j-notify.git")
+            developerConnection.set("scm:git:ssh://git@github.com/hse-rtcms4j/rtcms4j-notify.git")
+        }
+    }
 }
