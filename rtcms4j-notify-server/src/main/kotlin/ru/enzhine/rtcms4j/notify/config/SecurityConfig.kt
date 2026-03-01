@@ -15,7 +15,7 @@ class SecurityConfig {
             .csrf { it.disable() }
             .authorizeExchange { auth ->
                 auth
-                    .pathMatchers("/actuator/health")
+                    .pathMatchers("/actuator/health/**")
                     .permitAll()
                     .anyExchange()
                     .authenticated()
