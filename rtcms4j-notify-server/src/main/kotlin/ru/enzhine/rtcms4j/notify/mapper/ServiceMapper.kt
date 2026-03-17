@@ -13,6 +13,7 @@ fun NotificationEventDto.toService() =
         applicationId = applicationId,
         secretRotatedEvent = secretRotatedEvent?.toService(),
         configUpdatedEvent = configurationUpdatedEvent?.toService(),
+        isHeartbeat = false,
     )
 
 fun NotificationEventDto.ConfigurationUpdatedEventDto.toService() =

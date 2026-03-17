@@ -5,6 +5,7 @@ data class NotificationEvent(
     val applicationId: Long,
     val secretRotatedEvent: SecretRotatedEvent?,
     val configUpdatedEvent: ConfigUpdatedEvent?,
+    val isHeartbeat: Boolean,
 ) {
     data class SecretRotatedEvent(
         val newSecret: String,

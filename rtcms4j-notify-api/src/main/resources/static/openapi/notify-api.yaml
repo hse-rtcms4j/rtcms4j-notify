@@ -280,11 +280,14 @@ components:
       required:
         - configurationUpdateEvent
         - passwordRotationEvent
+        - isHeartbeat
       properties:
         configurationUpdateEvent:
           $ref: '#/components/schemas/ConfigurationUpdateEventDto'
         passwordRotationEvent:
           $ref: '#/components/schemas/PasswordRotationEventDto'
+        isHeartbeat:
+          type: boolean
 
     ConfigurationUpdateEventDto:
       type: object
