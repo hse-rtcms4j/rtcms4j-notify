@@ -27,6 +27,7 @@ fun NotificationEvent.toApi() =
     NotificationEventDto(
         configUpdatedEvent?.toApi(),
         secretRotatedEvent?.toApi(),
+        isHeartbeat
     )
 
 fun NotificationEvent.ConfigUpdatedEvent.toApi() =
