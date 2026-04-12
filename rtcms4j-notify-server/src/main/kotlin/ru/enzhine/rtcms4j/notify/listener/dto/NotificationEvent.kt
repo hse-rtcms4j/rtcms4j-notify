@@ -8,7 +8,7 @@ data class NotificationEvent(
     val isHeartbeat: Boolean,
 ) {
     data class SecretRotatedEvent(
-        val newSecret: String,
+        val newSecret: String?,
     )
 
     data class ConfigUpdatedEvent(

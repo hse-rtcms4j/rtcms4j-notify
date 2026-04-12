@@ -9,34 +9,33 @@ import ru.enzhine.rtcms4j.notify.listener.dto.NotificationEvent
 import ru.enzhine.rtcms4j.notify.service.internal.dto.ApplicationFeedback
 import ru.enzhine.rtcms4j.notify.service.internal.dto.ConfigurationFeedback
 
-fun ApplicationFeedback.toApi() =
+fun ApplicationFeedback.toApi(): ApplicationFeedbackDto =
     ApplicationFeedbackDto(
         timestamp.toString(),
         clientName,
         secretRotated,
     )
 
-fun ConfigurationFeedback.toApi() =
+fun ConfigurationFeedback.toApi(): ConfigurationFeedbackDto =
     ConfigurationFeedbackDto(
         timestamp.toString(),
         clientName,
         version,
     )
 
-fun NotificationEvent.toApi() =
+fun NotificationEvent.toApi(): NotificationEventDto =
     NotificationEventDto(
         configUpdatedEvent?.toApi(),
         secretRotatedEvent?.toApi(),
-        isHeartbeat
+        isHeartbeat,
     )
 
-fun NotificationEvent.ConfigUpdatedEvent.toApi() =
+fun NotificationEvent.ConfigUpdatedEvent.toApi(): ConfigurationUpdateEventDto =
     ConfigurationUpdateEventDto(
         configurationId,
         payload,
     )
 
-fun NotificationEvent.SecretRotatedEvent.toApi() =
-    PasswordRotationEventDto(
-        newSecret,
-    )
+fun NotificationEvent.SecretRotatedEvent.toApi(): PasswordRotationEventDto =
+    PasswordRotationEventDto()
+        .newPassword(newSecret)

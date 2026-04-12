@@ -27,7 +27,8 @@ class NotificationServiceImpl(
         val heartbeatFlux =
             Flux.interval(sseProperties.heartbeatPeriod).map { heartbeatNotificationEvent(namespaceId, applicationId) }
 
-        return Flux.merge(notificationsFlux, heartbeatFlux)
+        return Flux
+            .merge(notificationsFlux, heartbeatFlux)
             .takeUntil { it.secretRotatedEvent != null }
     }
 
