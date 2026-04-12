@@ -303,8 +303,6 @@ components:
 
     PasswordRotationEventDto:
       type: object
-      required:
-        - newPassword
       properties:
         newPassword:
           type: string
