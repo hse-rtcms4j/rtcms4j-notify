@@ -2,6 +2,7 @@ package ru.enzhine.rtcms4j.notify.service.internal
 
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import ru.enzhine.rtcms4j.notify.config.props.SseProperties
 import ru.enzhine.rtcms4j.notify.listener.NotifyEventListener
 import ru.enzhine.rtcms4j.notify.listener.dto.NotificationEvent
@@ -24,8 +25,17 @@ class NotificationServiceImpl(
 
         val notificationsFlux =
             notifyEventListener.subscribe(subscribeKey)
+
+        val heartbeatEvent = heartbeatNotificationEvent(namespaceId, applicationId)
         val heartbeatFlux =
-            Flux.interval(sseProperties.heartbeatPeriod).map { heartbeatNotificationEvent(namespaceId, applicationId) }
+            Mono
+                .delay(sseProperties.heartbeatDelay)
+                .thenMany(
+                    Flux.concat(
+                        Flux.just(heartbeatEvent),
+                        Flux.interval(sseProperties.heartbeatPeriod).map { heartbeatEvent },
+                    ),
+                )
 
         return Flux
             .merge(notificationsFlux, heartbeatFlux)

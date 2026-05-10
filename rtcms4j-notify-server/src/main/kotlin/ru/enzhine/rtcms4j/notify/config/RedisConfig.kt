@@ -1,14 +1,17 @@
 package ru.enzhine.rtcms4j.notify.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.lettuce.core.event.connection.ConnectionDeactivatedEvent
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.core.ReactiveRedisTemplate
 import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import org.springframework.data.redis.serializer.StringRedisSerializer
+import ru.enzhine.rtcms4j.notify.config.props.ReliabilityProperties
 import ru.enzhine.rtcms4j.notify.repository.dto.ApplicationFeedbackEntity
 import ru.enzhine.rtcms4j.notify.repository.dto.ConfigurationFeedbackEntity
 
@@ -56,6 +59,26 @@ class RedisConfig {
 
     @Bean
     fun reactiveRedisMessageListenerContainer(
-        redisConnectionFactory: ReactiveRedisConnectionFactory,
-    ): ReactiveRedisMessageListenerContainer = ReactiveRedisMessageListenerContainer(redisConnectionFactory)
+        reactiveRedisConnectionFactory: ReactiveRedisConnectionFactory,
+        lettuceConnectionFactory: LettuceConnectionFactory,
+        reliabilityProperties: ReliabilityProperties,
+    ): ReactiveRedisMessageListenerContainer {
+        val container = ReactiveRedisMessageListenerContainer(reactiveRedisConnectionFactory)
+
+        if (reliabilityProperties.strict) {
+            lettuceConnectionFactory.clientResources?.let {
+                it.eventBus().get().subscribe { event ->
+                    if (event is ConnectionDeactivatedEvent) {
+                        container.activeSubscriptions.forEach { connection ->
+                            connection
+                                .cancel()
+                                .subscribe()
+                        }
+                    }
+                }
+            }
+        }
+
+        return container
+    }
 }
